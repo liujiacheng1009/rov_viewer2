@@ -58,9 +58,8 @@ class EKF:
         if(norm_delta_angle>EPSILON):
             dR = cv2.Rodrigues(delta_angle_axis)[0]
             self.state.r_GI = last_state.r_GI.dot(dR)
-
         Fx = np.eye(15)
-        Fx[:3,:3] = np.eye(3)*dt
+        Fx[:3,3:6] = np.eye(3)*dt
         Fx[3:6,6:9] = -self.state.r_GI.dot(skew_matrix(acc_unbias))*dt 
         Fx[3:6,9:12] = -self.state.r_GI * dt 
         if(norm_delta_angle>EPSILON):
@@ -77,9 +76,12 @@ class EKF:
         Qi[3:6,3:6] = np.eye(3)*dt2*self.gyr_noise_
         Qi[6:9,6:9] = np.eye(3)*dt*self.acc_bias_noise_
         Qi[9:12,9:12] = np.eye(3)*dt*self.gyr_bias_noise_
+
         self.state.cov = Fx.dot(last_state.cov).dot(Fx.T) + Fi.dot(Qi).dot(Fi.T)
 
+
     def update_measurement(self,H,V,r):
+       # import ipdb;ipdb.set_trace()
         P = self.state.cov 
         S = H.dot(P).dot(H.T) + V 
         K = P.dot(H.T).dot(np.linalg.inv(S))
